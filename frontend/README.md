@@ -1,70 +1,210 @@
-# Getting Started with Create React App
+# Salon Natasha - PostgreSQL Migration
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+This project has been successfully migrated from **MongoDB** to **PostgreSQL** using **SQLModel** and **Supabase** as the database provider.
 
-In the project directory, you can run:
+## Documentation Index
 
-### `npm start`
+### Quick Start
+1. **[MIGRATION_SUMMARY.md](MIGRATION_SUMMARY.md)** - Quick overview of what changed
+2. **[backend/README.md](backend/README.md)** - Backend API documentation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Detailed Documentation
+3. **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Complete migration guide with setup instructions
+4. **[CODE_COMPARISON.md](CODE_COMPARISON.md)** - Side-by-side comparison of MongoDB vs SQLModel code
+5. **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Comprehensive deployment checklist
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Code Examples
+6. **[frontend/api-example.ts](frontend/api-example.ts)** - TypeScript API client example
+7. **[backend/.env.example](backend/.env.example)** - Environment variables template
 
-### `npm test`
+## Project Structure
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+salon_natasha/
+├── backend/
+│   ├── __init__.py
+│   ├── server.py              # FastAPI application
+│   ├── database.py            # SQLModel database connection
+│   ├── models.py              # Database models
+│   ├── schemas.py             # Pydantic schemas
+│   ├── requirements.txt       # Python dependencies
+│   ├── setup.sh              # Setup script
+│   ├── .env.example          # Environment template
+│   └── routers/
+│       ├── __init__.py
+│       ├── users.py          # User endpoints
+│       ├── masters.py        # Master endpoints
+│       ├── services.py       # Service endpoints
+│       └── appointments.py   # Appointment endpoints
+│
+├── frontend/
+│   └── api-example.ts        # Frontend API client
+│
+├── README.md                 # This file
+├── MIGRATION_SUMMARY.md      # Quick migration overview
+├── MIGRATION_GUIDE.md        # Detailed migration guide
+├── CODE_COMPARISON.md        # Code comparison
+└── DEPLOYMENT_CHECKLIST.md   # Deployment checklist
+```
 
-### `npm run build`
+## Quick Start
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 1. Install Dependencies
+```bash
+cd backend
+pip install -r requirements.txt
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 2. Configure Environment
+```bash
+cp .env.example .env
+# Edit .env with your Supabase credentials
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 3. Run the Server
+```bash
+python -m uvicorn server:app --reload
+```
 
-### `npm run eject`
+### 4. Access API Documentation
+Open your browser to http://localhost:8000/docs
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Technology Stack
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Backend
+- **Framework**: FastAPI
+- **Database**: PostgreSQL (Supabase)
+- **ORM**: SQLModel
+- **Authentication**: JWT with bcrypt
+- **Server**: Uvicorn
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Database
+- **Provider**: Supabase
+- **Type**: PostgreSQL 15+
+- **Features**:
+  - Row Level Security (RLS)
+  - Foreign key constraints
+  - UUID primary keys
+  - Automatic timestamps
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## API Endpoints
 
-## Learn More
+### Users
+- `POST /api/users/` - Register new user
+- `POST /api/users/login/` - Login and get JWT token
+- `GET /api/users/` - List all users
+- `GET /api/users/{id}` - Get user by ID
+- `DELETE /api/users/{id}` - Delete user
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Masters
+- `POST /api/masters/` - Create master
+- `GET /api/masters/` - List all masters
+- `GET /api/masters/{id}` - Get master by ID
+- `PUT /api/masters/{id}` - Update master
+- `DELETE /api/masters/{id}` - Delete master
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Services
+- `POST /api/services/` - Create service
+- `GET /api/services/` - List all services
+- `GET /api/services/{id}` - Get service by ID
+- `PUT /api/services/{id}` - Update service
+- `DELETE /api/services/{id}` - Delete service
 
-### Code Splitting
+### Appointments
+- `POST /api/appointments/` - Create appointment
+- `GET /api/appointments/` - List all appointments
+- `GET /api/appointments/{id}` - Get appointment by ID
+- `PUT /api/appointments/{id}` - Update appointment
+- `DELETE /api/appointments/{id}` - Delete appointment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Database Schema
 
-### Analyzing the Bundle Size
+### Tables
+1. **users** - User accounts and authentication
+2. **masters** - Salon professionals/specialists
+3. **services** - Available salon services
+4. **appointments** - Client bookings with foreign keys
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Relationships
+- Appointments → Users (many-to-one)
+- Appointments → Masters (many-to-one)
+- Appointments → Services (many-to-one)
 
-### Making a Progressive Web App
+## Migration Status
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+✅ Database schema created in Supabase
+✅ All models converted to SQLModel
+✅ All routers updated with SQL queries
+✅ Dependencies updated
+✅ API compatibility maintained
+✅ Row Level Security configured
+✅ Foreign key constraints implemented
+✅ Indexes created for performance
 
-### Advanced Configuration
+## Frontend Compatibility
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+**No changes required!** The REST API interface is fully compatible with existing frontend code. All endpoints maintain the same request/response formats.
 
-### Deployment
+## Key Benefits
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. **Data Integrity** - ACID transactions and foreign key constraints
+2. **Performance** - Optimized queries with proper indexing
+3. **Security** - Row Level Security policies in Supabase
+4. **Type Safety** - SQLModel provides excellent type checking
+5. **Scalability** - PostgreSQL's proven scalability
+6. **Standard SQL** - Industry-standard query language
+7. **Better Tooling** - Rich ecosystem for PostgreSQL
 
-### `npm run build` fails to minify
+## Environment Variables
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Required variables in `.env`:
+
+```env
+SUPABASE_DB_URL=postgresql://user:password@host:port/database
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_MINUTES=30
+```
+
+## Development
+
+### Running Tests
+```bash
+pytest
+```
+
+### Code Formatting
+```bash
+black .
+isort .
+```
+
+### Type Checking
+```bash
+mypy .
+```
+
+### Linting
+```bash
+flake8 .
+```
+
+## Support
+
+For issues or questions, refer to:
+- [SQLModel Documentation](https://sqlmodel.tiangolo.com)
+- [FastAPI Documentation](https://fastapi.tiangolo.com)
+- [Supabase Documentation](https://supabase.com/docs)
+
+## License
+
+[Your License Here]
+
+---
+
+**Version**: 2.0.0 (PostgreSQL Migration)
+**Migration Date**: 2025-12-05
+**Status**: ✅ Production Ready

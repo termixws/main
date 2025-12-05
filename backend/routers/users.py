@@ -1,55 +1,85 @@
-from fastapi import APIRouter, HTTPException
-from schemas import UserCreate, UserRead, UserLogin, Token
-from database import users_collection
-from auth import get_password_hash, verify_password
-from jwt_utils import create_access_token
-import uuid
+from fastapi import APIRouter, HTTPException, Depends
+from sqlmodel import Session, select
+from passlib.context import CryptContext
+from ..models import User
+from ..schemas import UserCreate, UserRead, UserLogin, Token
+from ..database import get_session
+from ..jwt_utils import create_access_token
+import logging
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+logger = logging.getLogger(__name__)
 
-@router.post("/", response_model=UserRead)
-async def create_user(user: UserCreate):
-    # Check if user exists
-    existing_user = await users_collection.find_one({"email": user.email})
+
+@router.post("/", response_model=UserRead, status_code=201)
+def create_user(user: UserCreate, session: Session = Depends(get_session)):
+    statement = select(User).where(User.email == user.email)
+    existing_user = session.exec(statement).first()
+
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Create new user
-    hashed_password = get_password_hash(user.password)
-    new_user = {
-        "id": str(uuid.uuid4()),
-        "email": user.email,
-        "name": user.name,
-        "hashed_password": hashed_password
-    }
-    
-    await users_collection.insert_one(new_user)
-    return UserRead(id=new_user["id"], email=new_user["email"], name=new_user["name"])
+
+    hashed_password = pwd_context.hash(user.password)
+
+    new_user = User(
+        email=user.email,
+        hashed_password=hashed_password,
+        name=user.name
+    )
+
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+
+    logger.info(f"User created: {new_user.email}")
+    return new_user
+
 
 @router.post("/login/", response_model=Token)
-async def login(user: UserLogin):
-    db_user = await users_collection.find_one({"email": user.email})
-    if not db_user or not verify_password(user.password, db_user["hashed_password"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    access_token = create_access_token({"sub": db_user["email"], "user_id": db_user["id"]})
-    return Token(access_token=access_token)
+def login(credentials: UserLogin, session: Session = Depends(get_session)):
+    statement = select(User).where(User.email == credentials.email)
+    user = session.exec(statement).first()
+
+    if not user or not pwd_context.verify(credentials.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+    access_token = create_access_token(
+        data={"sub": user.email, "user_id": str(user.id)}
+    )
+
+    logger.info(f"User logged in: {user.email}")
+    return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.get("/", response_model=list[UserRead])
-async def read_users():
-    users = await users_collection.find({}, {"_id": 0, "hashed_password": 0}).to_list(1000)
-    return [UserRead(**user) for user in users]
+def get_users(session: Session = Depends(get_session)):
+    statement = select(User)
+    users = session.exec(statement).all()
+    return users
+
 
 @router.get("/{user_id}", response_model=UserRead)
-async def read_user(user_id: str):
-    user = await users_collection.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
+def get_user(user_id: str, session: Session = Depends(get_session)):
+    statement = select(User).where(User.id == user_id)
+    user = session.exec(statement).first()
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return UserRead(**user)
+
+    return user
+
 
 @router.delete("/{user_id}")
-async def delete_user(user_id: str):
-    result = await users_collection.delete_one({"id": user_id})
-    if result.deleted_count == 0:
+def delete_user(user_id: str, session: Session = Depends(get_session)):
+    statement = select(User).where(User.id == user_id)
+    user = session.exec(statement).first()
+
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"message": "User deleted"}
+
+    session.delete(user)
+    session.commit()
+
+    logger.info(f"User deleted: {user.email}")
+    return {"message": "User deleted successfully"}

@@ -1,51 +1,49 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 import logging
-from pathlib import Path
+from .routers import users, masters, services, appointments
+from .database import init_db
 
-# Load environment
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv()
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Create the main app
 app = FastAPI(title="Salon Natasha API")
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+origins = os.getenv("CORS_ORIGINS", "*").split(",")
 
-# Import routers
-from routers import users, masters, services, appointments
-
-# Include routers in api_router
-api_router.include_router(users.router)
-api_router.include_router(masters.router)
-api_router.include_router(services.router)
-api_router.include_router(appointments.router)
-
-# Root endpoint
-@api_router.get("/")
-async def root():
-    return {"message": "Welcome to Salon Natasha API"}
-
-# Include the api_router in the main app
-app.include_router(api_router)
-
-# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-logger.info("Salon Natasha API started successfully")
+app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(masters.router, prefix="/api/masters", tags=["masters"])
+app.include_router(services.router, prefix="/api/services", tags=["services"])
+app.include_router(appointments.router, prefix="/api/appointments", tags=["appointments"])
+
+
+@app.on_event("startup")
+def on_startup():
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("Database initialized successfully")
+
+
+@app.get("/api/")
+def root():
+    return {"message": "Welcome to Salon Natasha API"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

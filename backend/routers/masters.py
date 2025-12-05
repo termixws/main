@@ -1,53 +1,91 @@
-from fastapi import APIRouter, HTTPException
-from schemas import MasterCreate, MasterRead, MasterUpdate
-from database import masters_collection
-import uuid
+from fastapi import APIRouter, HTTPException, Depends
+from sqlmodel import Session, select
+from ..models import Master
+from ..schemas import MasterCreate, MasterRead, MasterUpdate
+from ..database import get_session
+import logging
 
-router = APIRouter(prefix="/master", tags=["Masters"])
+router = APIRouter()
+logger = logging.getLogger(__name__)
 
-@router.post("/", response_model=MasterRead)
-async def create_master(master: MasterCreate):
-    # Check if master with phone exists
-    existing_master = await masters_collection.find_one({"phone": master.phone})
+
+@router.post("/", response_model=MasterRead, status_code=201)
+def create_master(master: MasterCreate, session: Session = Depends(get_session)):
+    statement = select(Master).where(Master.phone == master.phone)
+    existing_master = session.exec(statement).first()
+
     if existing_master:
-        raise HTTPException(status_code=400, detail="Master with this phone already exists")
-    
-    new_master = {
-        "id": str(uuid.uuid4()),
-        **master.model_dump()
-    }
-    
-    await masters_collection.insert_one(new_master)
-    return MasterRead(**new_master)
+        raise HTTPException(status_code=400, detail="Phone already registered")
+
+    new_master = Master(
+        name=master.name,
+        sex=master.sex,
+        phone=master.phone,
+        experience=master.experience,
+        specialty=master.specialty
+    )
+
+    session.add(new_master)
+    session.commit()
+    session.refresh(new_master)
+
+    logger.info(f"Master created: {new_master.name}")
+    return new_master
+
 
 @router.get("/", response_model=list[MasterRead])
-async def read_masters():
-    masters = await masters_collection.find({}, {"_id": 0}).to_list(1000)
-    return [MasterRead(**master) for master in masters]
+def get_masters(session: Session = Depends(get_session)):
+    statement = select(Master)
+    masters = session.exec(statement).all()
+    return masters
+
 
 @router.get("/{master_id}", response_model=MasterRead)
-async def read_master(master_id: str):
-    master = await masters_collection.find_one({"id": master_id}, {"_id": 0})
+def get_master(master_id: str, session: Session = Depends(get_session)):
+    statement = select(Master).where(Master.id == master_id)
+    master = session.exec(statement).first()
+
     if not master:
         raise HTTPException(status_code=404, detail="Master not found")
-    return MasterRead(**master)
+
+    return master
+
 
 @router.put("/{master_id}", response_model=MasterRead)
-async def update_master(master_id: str, update_data: MasterUpdate):
-    master = await masters_collection.find_one({"id": master_id})
+def update_master(
+    master_id: str,
+    master_update: MasterUpdate,
+    session: Session = Depends(get_session)
+):
+    statement = select(Master).where(Master.id == master_id)
+    master = session.exec(statement).first()
+
     if not master:
         raise HTTPException(status_code=404, detail="Master not found")
-    
-    update_dict = update_data.model_dump(exclude_unset=True)
-    if update_dict:
-        await masters_collection.update_one({"id": master_id}, {"$set": update_dict})
-    
-    updated_master = await masters_collection.find_one({"id": master_id}, {"_id": 0})
-    return MasterRead(**updated_master)
+
+    update_data = master_update.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(master, key, value)
+
+    session.add(master)
+    session.commit()
+    session.refresh(master)
+
+    logger.info(f"Master updated: {master.name}")
+    return master
+
 
 @router.delete("/{master_id}")
-async def delete_master(master_id: str):
-    result = await masters_collection.delete_one({"id": master_id})
-    if result.deleted_count == 0:
+def delete_master(master_id: str, session: Session = Depends(get_session)):
+    statement = select(Master).where(Master.id == master_id)
+    master = session.exec(statement).first()
+
+    if not master:
         raise HTTPException(status_code=404, detail="Master not found")
-    return {"message": "Master deleted"}
+
+    session.delete(master)
+    session.commit()
+
+    logger.info(f"Master deleted: {master.name}")
+    return {"message": "Master deleted successfully"}
