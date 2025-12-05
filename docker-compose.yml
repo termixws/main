@@ -1,22 +1,28 @@
-version: '3.9'
-
 services:
   backend:
     build: ./backend
-    container_name: salon-backend
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/salon_natasha.db:/app/salon_natasha.db
     environment:
-      - PYTHONUNBUFFERED=1
-    restart: unless-stopped
+      - DATABASE_URL=postgresql://user:password@db:5432/mydb
+    depends_on:
+      - db
 
   frontend:
     build: ./frontend
-    container_name: salon-frontend
     ports:
       - "3000:80"
     depends_on:
       - backend
-    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
