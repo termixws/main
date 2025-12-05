@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 from passlib.context import CryptContext
-from ..models import User
-from ..schemas import UserCreate, UserRead, UserLogin, Token
-from ..database import get_session
-from ..jwt_utils import create_access_token
+from models import User
+from schemas import UserCreate, UserRead, UserLogin, Token
+from database import get_session
+from jwt_utils import create_access_token
 import logging
 
 router = APIRouter()

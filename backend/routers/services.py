@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
-from ..models import Service
-from ..schemas import ServiceCreate, ServiceRead, ServiceUpdate
-from ..database import get_session
+from models import Service
+from schemas import ServiceCreate, ServiceRead, ServiceUpdate
+from database import get_session
 import logging
 
 router = APIRouter()

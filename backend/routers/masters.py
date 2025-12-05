@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
-from ..models import Master
-from ..schemas import MasterCreate, MasterRead, MasterUpdate
-from ..database import get_session
+from models import Master
+from schemas import MasterCreate, MasterRead, MasterUpdate
+from database import get_session
 import logging
 
 router = APIRouter()
