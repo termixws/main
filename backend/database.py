@@ -23,3 +23,6 @@ def get_session() -> Generator[Session, None, None]:
 
 def init_db():
     SQLModel.metadata.create_all(engine)
+
+
+    

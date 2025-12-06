@@ -3,7 +3,6 @@ from typing import Optional
 from datetime import datetime
 import uuid
 
-
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
@@ -14,7 +13,6 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     appointments: list["Appointment"] = Relationship(back_populates="user")
-
 
 class Master(SQLModel, table=True):
     __tablename__ = "masters"
@@ -29,7 +27,6 @@ class Master(SQLModel, table=True):
 
     appointments: list["Appointment"] = Relationship(back_populates="master")
 
-
 class Service(SQLModel, table=True):
     __tablename__ = "services"
 
@@ -41,7 +38,6 @@ class Service(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     appointments: list["Appointment"] = Relationship(back_populates="service")
-
 
 class Appointment(SQLModel, table=True):
     __tablename__ = "appointments"

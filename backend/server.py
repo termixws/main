@@ -31,18 +31,15 @@ app.include_router(masters.router, prefix="/api/masters", tags=["masters"])
 app.include_router(services.router, prefix="/api/services", tags=["services"])
 app.include_router(appointments.router, prefix="/api/appointments", tags=["appointments"])
 
-
 @app.on_event("startup")
 def on_startup():
     logger.info("Initializing database...")
     init_db()
     logger.info("Database initialized successfully")
 
-
 @app.get("/api/")
 def root():
     return {"message": "Welcome to Salon Natasha API"}
-
 
 if __name__ == "__main__":
     import uvicorn
