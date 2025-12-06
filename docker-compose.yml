@@ -10,9 +10,14 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend      # <--- БЫЛО ".", СТАЛО "./frontend"
+      dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       - backend
 
