@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import logging
 from routers import users, masters, services, appointments
-from .database import init_db
+from database import init_db
 
 load_dotenv()
 

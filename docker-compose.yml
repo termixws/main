@@ -2,13 +2,12 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+     - "8001:8000"  # было "8000:8000"
     environment:
-      # Убедитесь, что тут правильные данные (user/password/db как в сервисе db)
-      - DATABASE_URL=postgresql://user:password@db:5432/mydb
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/salon_natasha
     depends_on:
-      db:
-        condition: service_healthy  # <--- Бэкенд будет ЖДАТЬ запуска базы
+     db:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
@@ -20,14 +19,13 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: salon_natasha
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # Эта проверка каждые 5 сек стучится в базу
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mydb"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d salon_natasha"]
       interval: 5s
       timeout: 5s
       retries: 5
